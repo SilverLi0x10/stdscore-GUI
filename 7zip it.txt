@@ -1,0 +1,2 @@
+rm stdscore-GUI.7z
+7z a -xr!stdscore_GUI/target stdscore-GUI.7z stdscore-GUI
