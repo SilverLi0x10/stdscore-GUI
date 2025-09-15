@@ -7,11 +7,11 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'stdscore_gui'",
+            "name": "Debug executable 'stdscore-GUI'",
             "cargo": {
-                "args": ["build", "--bin=stdscore_gui", "--package=stdscore_gui"],
+                "args": ["build", "--bin=stdscore-GUI", "--package=stdscore-GUI"],
                 "filter": {
-                    "name": "stdscore_gui",
+                    "name": "stdscore-GUI",
                     "kind": "bin"
                 }
             },
@@ -21,11 +21,11 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'stdscore_gui'",
+            "name": "Debug unit tests in executable 'stdscore-GUI'",
             "cargo": {
-                "args": ["test", "--no-run", "--bin=stdscore_gui", "--package=stdscore_gui"],
+                "args": ["test", "--no-run", "--bin=stdscore-GUI", "--package=stdscore-GUI"],
                 "filter": {
-                    "name": "stdscore_gui",
+                    "name": "stdscore-GUI",
                     "kind": "bin"
                 }
             },

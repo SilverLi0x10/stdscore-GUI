@@ -1,5 +1,5 @@
-use anyhow::{anyhow, Context, Result};
-use eframe::{egui, App, Frame};
+use anyhow::{Context, Result, anyhow};
+use eframe::{App, Frame, egui};
 use egui::{FontData, FontDefinitions, FontFamily};
 use egui_extras::{Column, TableBuilder};
 use regex::Regex;
@@ -253,17 +253,49 @@ struct PersonScore {
 fn draw_table(ui: &mut egui::Ui, state: &AppState) {
     // Columns design:
     // Name | Avg Std | [File1 Std] [File1 Raw] | [File2 Std] [File2 Raw] | ...
+
+    // retrieve the FontId corresponding to the current Body style
+    let body_font_id = ui.style().text_styles[&egui::TextStyle::Body].clone();
+
+    // Calculate the Name column width: the pixel width of the longest name + 50
+    let name_max_width = state
+        .all_people
+        .iter()
+        .map(|name| {
+            ui.fonts(|f| {
+                f.layout_no_wrap(name.to_string(), body_font_id.clone(), egui::Color32::WHITE)
+                    .rect
+                    .width()
+            })
+        })
+        .fold(0.0, f32::max)
+        + 0.0;
+
+    // Calculate the column width for each file: file name width + 50
+    let file_widths: Vec<f32> = state
+        .file_order
+        .iter()
+        .map(|fname| {
+            ui.fonts(|f| {
+                f.layout_no_wrap(fname.clone(), body_font_id.clone(), egui::Color32::WHITE)
+                    .rect
+                    .width()
+            }) + 0.0
+        })
+        .collect();
+
+    // build table
     let mut table = TableBuilder::new(ui)
         .striped(true)
         .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
-        .column(Column::initial(150.0)); // Name
+        .column(Column::initial(name_max_width)) // Name
+        .column(Column::initial(100.0)); // Avg Std
 
-    for _ in &state.file_order {
+    for w in &file_widths {
         table = table
-            .column(Column::initial(90.0)) // Std
-            .column(Column::initial(90.0)); // Raw
+            .column(Column::initial(*w)) // Std
+            .column(Column::initial(*w)); // Raw
     }
-    table = table.column(Column::initial(100.0)); // Avg Std
 
     let mut sorted_people: Vec<PersonScore> = state
         .all_people
@@ -300,6 +332,8 @@ fn draw_table(ui: &mut egui::Ui, state: &AppState) {
         .header(20.0, |mut header| {
             header.col(|ui| {
                 ui.strong("Name");
+            });
+            header.col(|ui| {
                 ui.strong("Avg Std");
             });
             for file in &state.file_order {
@@ -321,6 +355,8 @@ fn draw_table(ui: &mut egui::Ui, state: &AppState) {
                 body.row(20.0, |mut row| {
                     row.col(|ui| {
                         ui.label(name);
+                    });
+                    row.col(|ui| {
                         ui.label(format!("{:.*}", state.precision, avg_std));
                     });
 
@@ -328,11 +364,15 @@ fn draw_table(ui: &mut egui::Ui, state: &AppState) {
                         if let Some((std, raw)) = score {
                             row.col(|ui| {
                                 ui.label(format!("{:.*}", state.precision, std));
+                            });
+                            row.col(|ui| {
                                 ui.label(format!("{:.*}", state.precision, raw));
                             });
                         } else {
                             row.col(|ui| {
                                 ui.label("-");
+                            });
+                            row.col(|ui| {
                                 ui.label("-");
                             });
                         }
