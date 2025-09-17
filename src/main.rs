@@ -17,7 +17,7 @@ struct PersonEntry {
 
 #[derive(Debug, Clone)]
 struct FileResult {
-    file_label: String,
+    // file_label: String,
     people: Vec<PersonEntry>,
     highest_non_std: f32,
 }
@@ -63,7 +63,7 @@ impl AppState {
         self.per_file.insert(
             label.clone(),
             FileResult {
-                file_label: label,
+                // file_label: label,
                 people: parsed,
                 highest_non_std: highest,
             },
@@ -257,7 +257,7 @@ fn draw_table(ui: &mut egui::Ui, state: &AppState) {
     // retrieve the FontId corresponding to the current Body style
     let body_font_id = ui.style().text_styles[&egui::TextStyle::Body].clone();
 
-    // Calculate the Name column width: the pixel width of the longest name + 50
+    // Calculate the Name column width
     let name_max_width = state
         .all_people
         .iter()
@@ -268,10 +268,9 @@ fn draw_table(ui: &mut egui::Ui, state: &AppState) {
                     .width()
             })
         })
-        .fold(0.0, f32::max)
-        + 0.0;
+        .fold(0.0, f32::max);
 
-    // Calculate the column width for each file: file name width + 50
+    // Calculate file column widths
     let file_widths: Vec<f32> = state
         .file_order
         .iter()
@@ -280,105 +279,112 @@ fn draw_table(ui: &mut egui::Ui, state: &AppState) {
                 f.layout_no_wrap(fname.clone(), body_font_id.clone(), egui::Color32::WHITE)
                     .rect
                     .width()
-            }) + 0.0
+            })
         })
         .collect();
 
-    // build table
-    let mut table = TableBuilder::new(ui)
-        .striped(true)
-        .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
-        .column(Column::initial(name_max_width)) // Name
-        .column(Column::initial(100.0)); // Avg Std
+    // Wrapped in horizontal scrolling area
+    egui::ScrollArea::horizontal()
+        .auto_shrink([false, false]) // No automatic shrinkage
+        .show(ui, |ui| {
+            let mut table = TableBuilder::new(ui)
+                .striped(true)
+                .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
+                .column(Column::initial(name_max_width)) // Name
+                .column(Column::initial(100.0)); // Avg Std
 
-    for w in &file_widths {
-        table = table
-            .column(Column::initial(*w)) // Std
-            .column(Column::initial(*w)); // Raw
-    }
-
-    let mut sorted_people: Vec<PersonScore> = state
-        .all_people
-        .iter()
-        .map(|name| {
-            let mut std_sum = 0.0f32;
-            let mut std_cnt = 0usize;
-            let mut scores: Vec<Option<(f32, f32)>> = Vec::new();
-
-            for file in &state.file_order {
-                if let Some((s, raw)) = compute_std_raw_for(&state.per_file, file, name) {
-                    scores.push(Some((s, raw)));
-                    std_sum += s;
-                    std_cnt += 1;
-                } else {
-                    scores.push(None);
-                }
+            for w in &file_widths {
+                table = table
+                    .column(Column::initial(*w)) // Std
+                    .column(Column::initial(*w)); // Raw
             }
 
-            let avg_std = std_sum / (std_cnt as f32);
+            let mut sorted_people: Vec<PersonScore> = state
+                .all_people
+                .iter()
+                .map(|name: &String| {
+                    let mut std_sum = 0.0f32;
+                    let mut std_cnt = 0usize;
+                    let mut scores: Vec<Option<(f32, f32)>> = Vec::new();
 
-            PersonScore {
-                name: name.clone(),
-                avg_std,
-                scores,
-            }
-        })
-        .collect();
-
-    // sort by avg std
-    sorted_people.sort_by(|a, b| b.avg_std.partial_cmp(&a.avg_std).unwrap());
-
-    table
-        .header(20.0, |mut header| {
-            header.col(|ui| {
-                ui.strong("Name");
-            });
-            header.col(|ui| {
-                ui.strong("Avg Std");
-            });
-            for file in &state.file_order {
-                header.col(|ui| {
-                    ui.strong(format!("{} Std", file));
-                });
-                header.col(|ui| {
-                    ui.strong(format!("{} Raw", file));
-                });
-            }
-        })
-        .body(|mut body| {
-            for PersonScore {
-                name,
-                avg_std,
-                scores,
-            } in &sorted_people
-            {
-                body.row(20.0, |mut row| {
-                    row.col(|ui| {
-                        ui.label(name);
-                    });
-                    row.col(|ui| {
-                        ui.label(format!("{:.*}", state.precision, avg_std));
-                    });
-
-                    for score in scores {
-                        if let Some((std, raw)) = score {
-                            row.col(|ui| {
-                                ui.label(format!("{:.*}", state.precision, std));
-                            });
-                            row.col(|ui| {
-                                ui.label(format!("{:.*}", state.precision, raw));
-                            });
+                    for file in &state.file_order {
+                        if let Some((s, raw)) = compute_std_raw_for(&state.per_file, file, name) {
+                            scores.push(Some((s, raw)));
+                            std_sum += s;
+                            std_cnt += 1;
                         } else {
-                            row.col(|ui| {
-                                ui.label("-");
-                            });
-                            row.col(|ui| {
-                                ui.label("-");
-                            });
+                            scores.push(None);
                         }
                     }
+
+                    let avg_std = if std_cnt > 0 {
+                        std_sum / (std_cnt as f32)
+                    } else {
+                        0.0
+                    };
+
+                    PersonScore {
+                        name: name.clone(),
+                        avg_std,
+                        scores,
+                    }
+                })
+                .collect();
+
+            sorted_people.sort_by(|a, b| b.avg_std.partial_cmp(&a.avg_std).unwrap());
+
+            table
+                .header(20.0, |mut header| {
+                    header.col(|ui| {
+                        ui.strong("Name");
+                    });
+                    header.col(|ui| {
+                        ui.strong("Avg Std");
+                    });
+                    for file in &state.file_order {
+                        header.col(|ui| {
+                            ui.strong(format!("{} Std", file));
+                        });
+                        header.col(|ui| {
+                            ui.strong(format!("{} Raw", file));
+                        });
+                    }
+                })
+                .body(|mut body| {
+                    for PersonScore {
+                        name,
+                        avg_std,
+                        scores,
+                    } in &sorted_people
+                    {
+                        body.row(20.0, |mut row| {
+                            row.col(|ui| {
+                                ui.label(name);
+                            });
+                            row.col(|ui| {
+                                ui.label(format!("{:.*}", state.precision, avg_std));
+                            });
+
+                            for score in scores {
+                                if let Some((std, raw)) = score {
+                                    row.col(|ui| {
+                                        ui.label(format!("{:.*}", state.precision, std));
+                                    });
+                                    row.col(|ui| {
+                                        ui.label(format!("{:.*}", state.precision, raw));
+                                    });
+                                } else {
+                                    row.col(|ui| {
+                                        ui.label("-");
+                                    });
+                                    row.col(|ui| {
+                                        ui.label("-");
+                                    });
+                                }
+                            }
+                        });
+                    }
                 });
-            }
         });
 }
 
