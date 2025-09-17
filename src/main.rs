@@ -2,6 +2,7 @@ use anyhow::{Context, Result, anyhow};
 use eframe::{App, Frame, egui};
 use egui::{FontData, FontDefinitions, FontFamily};
 use egui_extras::{Column, TableBuilder};
+use phf::phf_map;
 use regex::Regex;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
@@ -24,15 +25,15 @@ struct FileResult {
 
 #[derive(Debug, Default)]
 struct AppState {
-    // 保持文件顺序以构建列表头
+    // Maintain file order to build the list header
     file_order: Vec<String>,
-    // 每个文件名 -> 该文件解析结果
+    // Each file name -> parsed result of that file
     per_file: BTreeMap<String, FileResult>,
-    // 所有出现过的人名（保持排序）
+    // All people's names that appeared (maintain order)
     all_people: BTreeSet<String>,
-    // 界面状态
+    // Interface status
     status: String,
-    // 小数显示精度
+    // Decimal display precision
     precision: usize,
 }
 
@@ -77,6 +78,15 @@ impl AppState {
     }
 }
 
+/*
+ * Replacement for name in the table
+ * (name -> replacement)
+ * where name is LOWERCASE
+ */
+static REPLACE_NAME: phf::Map<&str, &str> = phf_map!(
+    "cqyc-wht" => "CQYC-王鸿天",
+);
+
 fn parse_people_from_html(html: &str) -> Result<Vec<PersonEntry>> {
     let doc = Html::parse_document(html);
 
@@ -119,12 +129,11 @@ fn parse_people_from_html(html: &str) -> Result<Vec<PersonEntry>> {
 
         // name in 2nd column (may be wrapped in <a>)
         let name_td = &tds[1];
-        let name = if let Some(a) = name_td.select(&a_sel).next() {
+        let mut name = if let Some(a) = name_td.select(&a_sel).next() {
             a.text().collect::<String>().trim().to_string()
         } else {
             name_td.text().collect::<String>().trim().to_string()
         };
-        // println!("name: {}", name);
         if name.is_empty() {
             eprintln!("UNEXPECTED: Empty name column");
             continue;
@@ -133,7 +142,6 @@ fn parse_people_from_html(html: &str) -> Result<Vec<PersonEntry>> {
         // total score in 3rd column, take first number
         let score_td = &tds[2];
         let score_text = score_td.text().collect::<String>();
-        // println!("score-text: {}", score_text);
         let score_str = re_num
             .find(&score_text)
             .ok_or_else(|| {
@@ -143,11 +151,13 @@ fn parse_people_from_html(html: &str) -> Result<Vec<PersonEntry>> {
                 )
             })?
             .as_str();
-        // println!("score-str: {}", score_str);
         let raw_score: f32 = score_str
             .parse()
             .with_context(|| format!("score parsing failed: {} (name: {})", score_str, name))?;
 
+        if let Some(new_name) = REPLACE_NAME.get(name.to_lowercase().as_str()) {
+            name = new_name.to_string();
+        }
         people.push(PersonEntry { name, raw_score });
     }
 

@@ -11,6 +11,5 @@ scraper = "0.19"
 regex = "1"
 anyhow = "1"
 serde = { version = "1", features = ["derive"] }
-
-# 读取拖拽文件内容（仅在某些平台需要）
 rfd = "0.14"
+phf = { version = "0.11", features = ["macros"] }
