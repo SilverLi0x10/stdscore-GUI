@@ -85,9 +85,35 @@ impl AppState {
  * (name -> replacement)
  * where name is LOWERCASE
  */
-static REPLACE_NAME: phf::Map<&str, &str> = phf_map!(
-    "cqyc-wht" => "CQYC-王鸿天",
-);
+static REPLACE_NAME: phf::Map<&'static str, &'static str> = phf_map! {
+    "!cqyc-dw" => "但未",
+    "0-cqyc-wht" => "王鸿天",
+    "4_cqyc-lty" => "刘天予",
+    "谭笑儒_cuo" => "谭笑儒",
+    "刘芸溪1" => "刘芸溪",
+    "李楷瑞_exam" => "李楷瑞",
+    "tangjunxi" => "唐浚希",
+    "wht" => "王鸿天",
+    "pyy" => "彭悠扬",
+    "dw"  => "但未",
+    "czy" => "陈泽语",
+    "zjx" => "张锦轩",
+    "wyd" => "王宥丁",
+    "nr"  => "倪锐",
+    "whz" => "吴昊臻",
+    "lcc" => "李承灿",
+    "szy" => "沈子益",
+    "hxr" => "黄湘瑞",
+    "zp"  => "曾普",
+    "syc" => "沈钰宸",
+    "lty" => "刘天予",
+    "xys" => "邢耘硕",
+    "fzx" => "冯泽鑫",
+    "tjx" => "唐浚希",
+    "ljh" => "廖俊豪",
+    "crz" => "曹瑞之",
+    "zqh" => "张勤浩",
+};
 
 fn parse_people_from_html(html: &str) -> Result<Vec<PersonEntry>> {
     let doc = Html::parse_document(html);

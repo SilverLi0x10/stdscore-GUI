@@ -1,0 +1,84 @@
+name: Build and Release Binaries
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: Build Windows exe
+        run: cargo build --release --target x86_64-pc-windows-msvc
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: stdscore-windows.exe
+          path: target/x86_64-pc-windows-msvc/release/*.exe
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: Build Linux binary
+        run: cargo build --release --target x86_64-unknown-linux-gnu
+      - name: Upload Linux Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: stdscore-linux
+          path: target/x86_64-unknown-linux-gnu/release/stdscore-GUI
+
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install Android SDK Platform 30
+        run: |
+          yes | sdkmanager --licenses
+          sdkmanager "platforms;android-30" "build-tools;30.0.3"
+        env:
+          ANDROID_HOME: ${{ env.ANDROID_HOME }}
+      - name: Install cargo-apk
+        run: cargo install cargo-apk
+      - name: Build Android APK
+        run: cargo apk build --release
+        env:
+          ANDROID_HOME: ${{ env.ANDROID_HOME }}
+      - name: Upload Android Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: stdscore-android.apk
+          path: target/android-artifacts/*.apk
+
+  release:
+    needs: [build-windows, build-linux, build-android]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./artifacts/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
