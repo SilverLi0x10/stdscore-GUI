@@ -87,6 +87,20 @@ impl AppState {
  */
 static REPLACE_NAME: phf::Map<&str, &str> = phf_map!(
     "cqyc-wht" => "CQYC-王鸿天",
+    "cqyc-dw" => "CQYC-但未",
+    "cqyc-pyy" => "CQYC-彭悠扬",
+    "cqyc-czy" => "CQYC-陈泽语",
+    "cqyc-nr" => "CQYC-倪锐",
+    "cqyc-whz" => "CQYC-吴昊臻",
+    "cqyc-lcc" => "CQYC-李承灿",
+    "cqyc-szy" => "CQYC-沈子益",
+    "cqyc-hxr" => "CQYC-黄湘瑞",
+    "cqyc-zp" => "CQYC-曾普",
+    "cqyc-syc" => "CQYC-沈钰宸",
+    "cqyc-fzx" => "CQYC-冯泽鑫",
+    "cqyc-ljh" => "CQYC-廖俊豪",
+    "cqyc-crz" => "CQYC-曹瑞之",
+    "cqyc-zqh" => "CQYC-张勤浩"
 );
 
 fn parse_people_from_html(html: &str) -> Result<Vec<PersonEntry>> {
