@@ -4,12 +4,17 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-eframe = "0.27"
-egui = "0.27"
-egui_extras = { version = "0.27", features = ["image"] }
-scraper = "0.19"
-regex = "1"
-anyhow = "1"
-serde = { version = "1", features = ["derive"] }
-rfd = "0.14"
+# GUI framework
+eframe = "0.32"
+egui = "0.32"
+egui_extras = { version = "0.32", features = ["image"] }
+# HTML parsing
+scraper = "0.20"
+# Regular expressions
+regex = "1.11"
+# Error handling
+anyhow = "1.0"
+# File dialog
+rfd = "0.15"
+# Constant hash table
 phf = { version = "0.11", features = ["macros"] }

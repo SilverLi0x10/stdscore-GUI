@@ -23,7 +23,7 @@ Inside this file, you will find a static mapping table like this:
 -   where name is LOWERCASE
     \*/
     static REPLACE_NAME: phf::Map<&str, &str> = phf_map!(
-    "cqyc-wht" => "CQYC-王鸿天",
+    "cqyc-xxx" => "CQYC-目标人名",
     // Add new aliases here
     );
 ```
@@ -63,7 +63,7 @@ Inside this file, you will find a static mapping table like this:
 -   where name is LOWERCASE
     \*/
     static REPLACE_NAME: phf::Map<&str, &str> = phf_map!(
-    "cqyc-wht" => "CQYC-王鸿天",
+    "cqyc-xxx" => "CQYC-目标人名",
     // 在这里添加新的别名
     );
 ```

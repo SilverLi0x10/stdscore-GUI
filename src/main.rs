@@ -1,3 +1,6 @@
+// Use the GUI subsystem only on Windows
+#![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
+
 use anyhow::{Context, Result, anyhow};
 use eframe::{App, Frame, egui};
 use egui::{FontData, FontDefinitions, FontFamily};
@@ -5,12 +8,11 @@ use egui_extras::{Column, TableBuilder};
 use phf::phf_map;
 use regex::Regex;
 use scraper::{Html, Selector};
-use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 use std::{env, fs};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 struct PersonEntry {
     name: String,
     raw_score: f32,
@@ -187,7 +189,7 @@ impl App for StdScoreApp {
             ui.add_space(4.0);
             ui.horizontal(|ui| {
                 ui.label("Accuracy:");
-                ui.add(egui::DragValue::new(&mut self.state.precision).clamp_range(0..=6));
+                ui.add(egui::DragValue::new(&mut self.state.precision).range(0..=6));
                 if ui.button("Clear").clicked() {
                     self.state.clear();
                 }
@@ -203,6 +205,16 @@ impl App for StdScoreApp {
                         }
                     }
                 }
+                // --- Push the toggle button to the far right ---
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if ui.button("Toggle Dark/Light").clicked() {
+                        if ctx.style().visuals.dark_mode {
+                            ctx.set_theme(egui::Theme::Light);
+                        } else {
+                            ctx.set_theme(egui::Theme::Dark);
+                        }
+                    }
+                });
             });
             if !self.state.status.is_empty() {
                 ui.colored_label(egui::Color32::RED, &self.state.status);
@@ -413,16 +425,18 @@ fn compute_std_raw_for(
 }
 
 fn setup_chinese_fonts(ctx: &egui::Context) {
+    // Infer font directory from SystemRoot on Windows only; other platforms can extend it
     let system_root = env::var("SystemRoot").unwrap_or_else(|_| "/Windows".to_string());
 
-    // try loading Noto Sans SC
+    // Try to load Noto Sans SC
     let noto_path = PathBuf::from(format!("{system_root}/Fonts/NotoSansSC-Regular.ttf"));
     println!("Noto Sans SC path: {}", noto_path.display());
+
     let font_data = if noto_path.exists() {
         println!("Use Noto Sans SC font");
         fs::read(noto_path).ok()
     } else {
-        // fallback to system fonts: Microsoft YaHei
+        // Fallback to Microsoft YaHei
         println!("Noto Sans SC does not exist, fallback to system fonts: Microsoft YaHei");
         let msyh_path = format!("{system_root}/Fonts/msyh.ttc");
         fs::read(msyh_path).ok()
@@ -430,9 +444,12 @@ fn setup_chinese_fonts(ctx: &egui::Context) {
 
     let mut fonts = FontDefinitions::default();
     if let Some(data) = font_data {
+        // Key: Convert FontData to Arc<FontData>
         fonts
             .font_data
-            .insert("chinese_font".to_owned(), FontData::from_owned(data));
+            .insert("chinese_font".to_owned(), FontData::from_owned(data).into());
+
+        // Put Chinese fonts on top of the proportional and monospace families, rendering Chinese first
         fonts
             .families
             .get_mut(&FontFamily::Proportional)
@@ -443,6 +460,7 @@ fn setup_chinese_fonts(ctx: &egui::Context) {
             .get_mut(&FontFamily::Monospace)
             .unwrap()
             .insert(0, "chinese_font".to_owned());
+
         ctx.set_fonts(fonts);
     } else {
         eprintln!("Failed to load any Chinese fonts, please check the font path");
@@ -450,17 +468,15 @@ fn setup_chinese_fonts(ctx: &egui::Context) {
 }
 
 fn main() -> eframe::Result<()> {
-    let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default().with_drag_and_drop(true),
-        ..Default::default()
-    };
+    let options = eframe::NativeOptions::default();
 
     eframe::run_native(
         "std score calculator",
         options,
         Box::new(|cc| {
             setup_chinese_fonts(&cc.egui_ctx);
-            Box::new(StdScoreApp::default())
+            // Key: Return Result<Box<dyn App>, _>
+            Ok(Box::new(StdScoreApp::default()))
         }),
     )
 }

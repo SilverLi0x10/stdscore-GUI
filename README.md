@@ -1,6 +1,6 @@
 # 📊 std score calculator
 
-A desktop GUI tool built with `eframe` and `egui` to parse HTML files containing score tables, normalize scores based on the highest non-"std" entry, and display a sortable comparison table. Supports drag-and-drop and Chinese font rendering.
+A desktop GUI tool built with `eframe` and `egui` to parse HTML files containing score tables, normalize scores based on the highest non-"std" entry, and display a sortable comparison table. Supports drag-and-drop, Chinese font rendering, and system-aware dark mode.
 
 ---
 
@@ -24,6 +24,7 @@ A desktop GUI tool built with `eframe` and `egui` to parse HTML files containing
     -   Average standardized score
     -   Per-file standardized and raw scores
 -   Supports Chinese fonts (Noto Sans SC or Microsoft YaHei)
+-   **Dark mode support (follows system preference by default)**
 
 ### 📦 Dependencies
 
@@ -61,7 +62,11 @@ Automatically attempts to load:
 
 -   Customizable parsing rules
 -   Export to CSV
--   Dark mode support
+
+### 📬 Feedback
+
+Feel free to open issues or submit pull requests. Contributions are welcome!
+👉 [Contributing Guide](https://github.com/SilverLi0x10/stdscore-GUI/blob/main/CONTRIBUTING.md)
 
 ---
 
@@ -78,6 +83,7 @@ Automatically attempts to load:
     -   平均标准分
     -   每个文件的标准分与原始分
 -   支持中文字体渲染（优先使用 Noto Sans SC，其次为微软雅黑）
+-   **支持暗黑模式（默认跟随系统设置）**
 
 ### 📦 依赖库
 
@@ -115,12 +121,9 @@ cargo run --release
 
 -   支持自定义解析规则
 -   导出 CSV 文件
--   支持暗黑模式
 
----
+### 📬 反馈
 
-## 📬 Feedback
+欢迎提交 Issue 或 Pull Request，一起改进本项目！
 
-Feel free to open issues or submit pull requests. Contributions are welcome!
-
-👉 [Contributing Guide / 贡献指南](https://github.com/SilverLi0x10/stdscore-GUI/blob/main/CONTRIBUTING.md)
+👉 [贡献指南](https://github.com/SilverLi0x10/stdscore-GUI/blob/main/CONTRIBUTING.md)
