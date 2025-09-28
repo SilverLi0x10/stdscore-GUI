@@ -1,8 +1,8 @@
 // Use the GUI subsystem only on Windows
 #![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
 
-use anyhow::{Context, Result, anyhow};
-use eframe::{App, Frame, egui};
+use anyhow::{anyhow, Context, Result};
+use eframe::{egui, App, Frame};
 use egui::{FontData, FontDefinitions, FontFamily};
 use egui_extras::{Column, TableBuilder};
 use phf::phf_map;
@@ -311,6 +311,7 @@ fn draw_table(ui: &mut egui::Ui, state: &AppState) {
         .file_order
         .iter()
         .map(|fname| {
+            let fname = fname.clone() + " Std";
             ui.fonts(|f| {
                 f.layout_no_wrap(fname.clone(), body_font_id.clone(), egui::Color32::WHITE)
                     .rect
@@ -327,7 +328,7 @@ fn draw_table(ui: &mut egui::Ui, state: &AppState) {
                 .striped(true)
                 .cell_layout(egui::Layout::left_to_right(egui::Align::Center))
                 .column(Column::initial(name_max_width)) // Name
-                .column(Column::initial(100.0)); // Avg Std
+                .column(Column::initial(100.0)); // Avg Std progressive bar
 
             for w in &file_widths {
                 table = table
@@ -375,7 +376,7 @@ fn draw_table(ui: &mut egui::Ui, state: &AppState) {
                         ui.strong("Name");
                     });
                     header.col(|ui| {
-                        ui.strong("Avg Std");
+                        ui.strong("Avg Bar");
                     });
                     for file in &state.file_order {
                         header.col(|ui| {
@@ -398,7 +399,16 @@ fn draw_table(ui: &mut egui::Ui, state: &AppState) {
                                 ui.label(name);
                             });
                             row.col(|ui| {
-                                ui.label(format!("{:.*}", state.precision, avg_std));
+                                let fraction = avg_std / 100.0;
+                                ui.add(
+                                    egui::ProgressBar::new(fraction)
+                                        .text(format!("{:.1}", avg_std))
+                                        .fill(egui::Color32::from_rgb(
+                                            (200.0 * (1.0 - fraction) + 55.0) as u8,
+                                            (200.0 * fraction + 55.0) as u8,
+                                            220,
+                                        )),
+                                );
                             });
 
                             for score in scores {
