@@ -6,29 +6,68 @@ on:
             - 'v*'
 
 jobs:
-    release:
-        runs-on: ubuntu-latest
+    build:
+        name: Build (${{ matrix.target }})
+        runs-on: ${{ matrix.os }}
         strategy:
             matrix:
-                target:
-                    [
-                        x86_64-unknown-linux-gnu,
-                        x86_64-pc-windows-gnu,
-                        x86_64-apple-darwin,
-                    ]
+                include:
+                    - os: windows-latest
+                      target: x86_64-pc-windows-msvc
+                      artifact: stdscore-GUI-x86_64-windows.exe
+                    - os: windows-latest
+                      target: i686-pc-windows-msvc
+                      artifact: stdscore-GUI-x86-windows.exe
+                    - os: ubuntu-latest
+                      target: x86_64-unknown-linux-musl
+                      artifact: stdscore-GUI-x86_64-linux
+                    - os: ubuntu-latest
+                      target: i686-unknown-linux-musl
+                      artifact: stdscore-GUI-x86-linux
 
         steps:
-            - uses: actions/checkout@v4
+            - name: Checkout
+              uses: actions/checkout@v4
 
-            - name: Build and Upload with rust-build
-              uses: rust-build/rust-build.action@v1.4.5
+            - name: Install Rust
+              uses: dtolnay/rust-toolchain@stable
+              with:
+                  targets: ${{ matrix.target }}
+
+            - name: Install musl tools (Linux only)
+              if: contains(matrix.target, 'musl')
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y musl-tools
+
+            - name: Build
+              run: cargo build --release --target ${{ matrix.target }}
+
+            - name: Rename artifact
+              run: |
+                  mkdir artifacts
+                  cp target/${{ matrix.target }}/release/stdscore-GUI artifacts/${{ matrix.artifact }}
+              shell: bash
+
+            - name: Upload artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: ${{ matrix.artifact }}
+                  path: artifacts/${{ matrix.artifact }}
+
+    release:
+        name: Create Release
+        needs: build
+        runs-on: ubuntu-latest
+        steps:
+            - name: Download artifacts
+              uses: actions/download-artifact@v4
+              with:
+                  path: artifacts
+
+            - name: Create Release
+              uses: softprops/action-gh-release@v2
+              with:
+                  files: artifacts/**/*
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  RUSTTARGET: ${{ matrix.target }}
-                  # 不打包 zip/tar，直接上传二进制
-                  ARCHIVE_TYPES: ''
-                  # 自定义上传的文件名（Release 页面里显示的名字）
-                  ARCHIVE_NAME: mytool-${{ matrix.target }}${{ matrix.target == 'x86_64-pc-windows-gnu' && '.exe' || '' }}
-                  # 如果需要 strip/UPX 压缩，可以加上
-                  MINIFY: false
