@@ -311,7 +311,7 @@ fn draw_table(ui: &mut egui::Ui, state: &AppState) {
         .file_order
         .iter()
         .map(|fname| {
-            let fname = fname.clone() + " Std";
+            let fname = fname.clone() + "-std";
             ui.fonts(|f| {
                 f.layout_no_wrap(fname.clone(), body_font_id.clone(), egui::Color32::WHITE)
                     .rect
@@ -373,17 +373,17 @@ fn draw_table(ui: &mut egui::Ui, state: &AppState) {
             table
                 .header(20.0, |mut header| {
                     header.col(|ui| {
-                        ui.strong("Name");
+                        ui.strong("name");
                     });
                     header.col(|ui| {
-                        ui.strong("Avg Bar");
+                        ui.strong("avg-bar");
                     });
                     for file in &state.file_order {
                         header.col(|ui| {
-                            ui.strong(format!("{} Std", file));
+                            ui.strong(format!("{}-std", file));
                         });
                         header.col(|ui| {
-                            ui.strong(format!("{} Raw", file));
+                            ui.strong(format!("{}-raw", file));
                         });
                     }
                 })
@@ -402,7 +402,7 @@ fn draw_table(ui: &mut egui::Ui, state: &AppState) {
                                 let fraction = avg_std / 100.0;
                                 ui.add(
                                     egui::ProgressBar::new(fraction)
-                                        .text(format!("{:.1}", avg_std))
+                                        .text(format!("{:.*}", state.precision, avg_std))
                                         .fill(egui::Color32::from_rgb(
                                             (200.0 * (1.0 - fraction) + 55.0) as u8,
                                             (200.0 * fraction + 55.0) as u8,
